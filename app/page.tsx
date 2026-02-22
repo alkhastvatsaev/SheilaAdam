@@ -14,7 +14,7 @@ export default function AthanPage() {
     pavlodar: [false, false, false, false, false]
   });
   const [loveMessage, setLoveMessage] = useState('');
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(new Date()); // always raw UTC
   const [currentPrayerIdx, setCurrentPrayerIdx] = useState(-1);
   const [isDark, setIsDark] = useState(false);
   const [snakeSmoke, setSnakeSmoke] = useState(false);
@@ -91,22 +91,14 @@ export default function AthanPage() {
     }
   };
 
-  const getLocalTime = useCallback((cid: CityId = cityId) => {
-    const now = new Date();
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-    return new Date(utc + (3600000 * CITIES[cid].offset));
-  }, [cityId]);
-
   useEffect(() => {
     const timer = setInterval(() => {
-      const now = new Date();
-      const cityNow = getLocalTime(cityId);
-      setCurrentTime(cityNow);
+      const now = new Date(); // raw UTC
+      setCurrentTime(now); // store raw UTC, formatLocalTime handles display
       
       const prayers = getPrayerTimesForCity(cityId, now);
       const times = [prayers.fajr, prayers.dhuhr, prayers.asr, prayers.maghrib, prayers.isha];
       
-      // CRITICAL: Compare using absolute UTC timestamps
       const nowTime = now.getTime();
       const isNight = nowTime < times[0].getTime() || nowTime > times[3].getTime();
       
@@ -122,7 +114,7 @@ export default function AthanPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [cityId, getLocalTime]);
+  }, [cityId]);
 
   const nowReal = new Date();
   const prayers = getPrayerTimesForCity(cityId, nowReal);
@@ -179,10 +171,9 @@ export default function AthanPage() {
     };
   };
 
-  // Helper to format local time strings correctly regardless of system timezone
-  const formatLocalTime = (date: Date, offset: number) => {
-    // Create a new date shifted by the offset, then read its UTC components
-    const shifted = new Date(date.getTime() + (offset * 3600000));
+  // Converts a UTC Date to HH:MM string for the given UTC offset (e.g. 5 for Pavlodar)
+  const formatLocalTime = (utcDate: Date, utcOffset: number) => {
+    const shifted = new Date(utcDate.getTime() + utcOffset * 3600000);
     const hours = shifted.getUTCHours().toString().padStart(2, '0');
     const minutes = shifted.getUTCMinutes().toString().padStart(2, '0');
     return `${hours}:${minutes}`;
