@@ -15,6 +15,7 @@ body.dark {
   --bg: #02040a;
   --text: #ffffff;
   --card: rgba(255, 255, 255, 0.08);
+  background: radial-gradient(circle at top, #1a1b3a, #02040a);
 }
 
 * {
@@ -45,7 +46,6 @@ body {
 }
 
 body.dark {
-  background: #02040a;
 }
 
 main {
