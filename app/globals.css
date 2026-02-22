@@ -1,0 +1,281 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;700&display=swap");
+
+:root {
+  --bg: #ffffff;
+  --text: #000;
+  --card: rgba(230, 230, 230, 0.3);
+  --sun: #ffcc00;
+  --moon: #f0f0f0;
+  --accent: #ff3b30;
+  --done: #34c759;
+  --blue: #007aff;
+}
+
+.dark {
+  --bg: #02040a;
+  --text: #fff;
+  --card: rgba(255, 255, 255, 0.1);
+  background: radial-gradient(circle at top, #1a1b3a, #02040a);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    "Outfit",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  transition: background 1.5s ease;
+  overflow: hidden;
+  width: 100vw;
+  /* Native App Feel */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#warpCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.city-selector {
+  position: absolute;
+  top: 40px;
+  display: flex;
+  gap: 8px;
+  background: var(--card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 5px;
+  border-radius: 25px;
+  z-index: 1000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.city-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 20px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.city-btn.active {
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+#user-focus {
+  font-size: 3rem;
+  font-weight: 200;
+  margin-bottom: 60px;
+  z-index: 100;
+  text-align: center;
+  width: 100%;
+  letter-spacing: -1px;
+}
+
+/* MESSAGE CAPSULE */
+#message-cloud {
+  position: absolute;
+  width: 320px;
+  height: 64px;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cloud-body {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+.dark .cloud-body {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(25px) brightness(1.2);
+}
+
+#msg-input {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  width: 85%;
+  text-align: center;
+  font-size: 16px;
+  outline: none;
+  font-family: inherit;
+  z-index: 510;
+  font-weight: 300;
+  letter-spacing: 0.5px;
+}
+
+#msg-input::placeholder {
+  color: var(--text);
+  opacity: 0.3;
+  font-style: italic;
+}
+
+/* TIMELINE */
+#sky-area {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  height: 350px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+#timeline {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: flex-end;
+  padding: 0 10px 40px 10px;
+  z-index: 10;
+}
+
+.node {
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 15px 5px;
+  border-radius: 20px;
+  transition: background 0.3s ease;
+}
+
+.node.active-prière {
+  background: var(--card);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.4;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.time {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.celestial {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  z-index: 2;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#sun {
+  background: var(--sun);
+}
+
+#moon {
+  background: var(--moon);
+}
+
+.check-circle {
+  width: 24px;
+  height: 24px;
+  background: var(--done);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  margin-bottom: 8px;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(52, 199, 89, 0.3);
+}
+
+#snake {
+  position: absolute;
+  height: 36px;
+  background: var(--accent);
+  border-radius: 18px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 12px;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(255, 59, 48, 0.4);
+  transition:
+    transform 0.8s ease,
+    opacity 0.8s ease,
+    width 0.5s ease;
+}
+
+#bottom-bar {
+  position: absolute;
+  bottom: 40px;
+  text-align: center;
+  opacity: 0.5;
+  width: 100%;
+}
+
+#clock {
+  font-size: 1.8rem;
+  font-weight: 200;
+  letter-spacing: 4px;
+}
+
+.city-display {
+  font-size: 10px;
+  letter-spacing: 2px;
+  margin-top: 8px;
+  text-transform: uppercase;
+  font-weight: 600;
+}

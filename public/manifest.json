@@ -1,0 +1,21 @@
+{
+  "name": "Athan - Adam & Sheïla",
+  "short_name": "Athan",
+  "description": "Application de prière connectée pour Adam et Sheïla",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#02040a",
+  "theme_color": "#02040a",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

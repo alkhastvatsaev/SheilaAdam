@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Adam & Sheïla</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --bg: #ffffff; --text: #000; --card: rgba(230, 230, 230, 0.3);
+            --sun: #ffcc00; --moon: #f0f0f0; --accent: #ff3b30; --done: #34c759;
+        }
+        .dark-mode {
+            --bg: #02040a; --text: #fff; --card: rgba(255, 255, 255, 0.1);
+            background: radial-gradient(circle at top, #1a1b3a, #02040a);
+        }
+
+        /* RESET BOX MODEL pour Safari */
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0; height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; background: var(--bg);
+            color: var(--text); font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            transition: background 1.5s ease; overflow: hidden; width: 100vw;
+        }
+        #warpCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 1; z-index: -1; }
+
+        .city-selector {
+            position: absolute; top: 40px; display: flex; gap: 8px;
+            background: var(--card); backdrop-filter: blur(20px);
+            padding: 5px; border-radius: 25px; z-index: 1000;
+        }
+        .city-btn { padding: 8px 18px; border: none; border-radius: 20px; background: transparent; color: var(--text); cursor: pointer; font-size: 13px; font-weight: 500; }
+        .city-btn.active { background: #007aff; color: #fff; }
+
+        #user-focus { font-size: 2.5rem; font-weight: 200; margin-bottom: 60px; cursor: pointer; z-index: 100; text-align: center; width: 100%; }
+
+        /* MESSAGE CAPSULE (Design Premium) */
+        #message-cloud {
+            position: absolute; 
+            display: block; 
+            width: 300px; 
+            height: 60px; 
+            z-index: 500;
+            pointer-events: none; 
+            animation: floatCapsule 8s ease-in-out infinite; 
+        }
+
+        .cloud-body {
+            position: absolute; 
+            width: 100%; 
+            height: 100%;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            transition: all 0.5s ease;
+        }
+
+        .dark-mode .cloud-body { 
+            background: rgba(0, 0, 0, 0.2); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            backdrop-filter: blur(25px) brightness(1.2);
+        }
+
+        #msg-input {
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            background: transparent; 
+            border: none; 
+            color: var(--text);
+            width: 85%; 
+            text-align: center; 
+            font-size: 16px; 
+            outline: none;
+            font-family: 'Outfit', -apple-system, sans-serif;
+            z-index: 510; 
+            pointer-events: auto; 
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        #msg-input::placeholder {
+            color: var(--text);
+            opacity: 0.2;
+            font-style: italic;
+        }
+
+        @keyframes floatCapsule {
+            0%, 100% { top: 80px; left: 50%; transform: translateX(-50%) translateY(0); }
+            25% { transform: translateX(-48%) translateY(-10px); }
+            50% { top: 90px; left: 52%; transform: translateX(-52%) translateY(5px); }
+            75% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        /* TIMELINE CENTRÉE POUR MOBILE */
+        #sky-area { 
+            position: relative; 
+            width: 100%; 
+            max-width: 500px; /* Plus étroit pour mieux centrer sur mobile */
+            height: 350px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-end;
+            align-items: center;
+        }
+        
+        #timeline {
+            position: relative; 
+            width: 100%; 
+            display: flex; 
+            justify-content: space-evenly; /* Répartition égale */
+            align-items: flex-end;
+            padding: 0 10px 40px 10px; 
+            z-index: 10;
+        }
+
+        .node { 
+            text-align: center; 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            cursor: pointer; 
+            padding: 15px 5px;
+            border-radius: 20px;
+        }
+        
+        .node.active-prière { background: var(--card); backdrop-filter: blur(15px); }
+        .label { font-size: 10px; font-weight: 700; opacity: 0.4; text-transform: uppercase; margin-bottom: 5px; }
+        .time { font-size: 14px; font-weight: 400; }
+
+        /* RESTE DU STYLE */
+        .celestial { position: absolute; width: 45px; height: 45px; border-radius: 50%; z-index: 2; }
+        #sun { background: var(--sun); box-shadow: 0 0 60px var(--sun); }
+        #moon { background: var(--moon); box-shadow: 0 0 40px rgba(255,255,255,0.4); }
+        .check-circle { width: 22px; height: 22px; background: var(--done); color: white; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 10px; margin-bottom: 8px; font-weight: bold; }
+
+        #snake {
+            position: absolute; height: 36px; background: var(--accent);
+            border-radius: 18px; z-index: 20; display: none;
+            align-items: center; justify-content: flex-end; padding-right: 12px;
+            color: white; font-size: 11px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 8px 20px rgba(255, 59, 48, 0.4);
+            transition: transform 0.8s ease, opacity 0.8s ease;
+        }
+        .smoke-out { transform: scale(2) translateY(-80px); opacity: 0 !important; filter: blur(50px); }
+
+        #bottom-bar { position: absolute; bottom: 40px; text-align: center; opacity: 0.4; pointer-events: none; width: 100%; }
+        #clock { font-size: 1.6rem; font-weight: 200; letter-spacing: 3px; }
+    </style>
+</head>
+<body>
+
+    <canvas id="warpCanvas"></canvas>
+    <div class="city-selector">
+        <button class="city-btn active" onclick="changeCity('strasbourg', this)">Strasbourg</button>
+        <button class="city-btn" onclick="changeCity('pavlodar', this)">Pavlodar</button>
+    </div>
+
+    <div id="user-focus">Adam</div>
+
+    <div id="message-cloud">
+        <div class="cloud-body"></div>
+        <input type="text" id="msg-input" placeholder="..." oninput="sendToFirebase(this.value)">
+    </div>
+
+    <div id="sky-area">
+        <div id="sun" class="celestial"></div>
+        <div id="moon" class="celestial"></div>
+        <div id="timeline">
+            <div id="snake" onclick="validateCurrent()"></div>
+            <div class="node" id="n0" onclick="manualToggle(0)"><div class="check-circle" id="c0">✓</div><div class="label">Fajr</div><div class="time" id="t0">--:--</div></div>
+            <div class="node" id="n1" onclick="manualToggle(1)"><div class="check-circle" id="c1">✓</div><div class="label">Dhuhr</div><div class="time" id="t1">--:--</div></div>
+            <div class="node" id="n2" onclick="manualToggle(2)"><div class="check-circle" id="c2">✓</div><div class="label">Asr</div><div class="time" id="t2">--:--</div></div>
+            <div class="node" id="n3" onclick="manualToggle(3)"><div class="check-circle" id="c3">✓</div><div class="label">Maghrib</div><div class="time" id="t3">--:--</div></div>
+            <div class="node" id="n4" onclick="manualToggle(4)"><div class="check-circle" id="c4">✓</div><div class="label">Isha</div><div class="time" id="t4">--:--</div></div>
+        </div>
+    </div>
+
+    <div id="bottom-bar">
+        <div id="clock">00:00</div>
+        <div id="city-name" style="font-size: 10px; letter-spacing: 2px; margin-top: 6px;">STRASBOURG</div>
+    </div>
+
+    <script>
+        // Ta config Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAxIQfE2eYSEVvYkfL-KJ1TcJfxOdw3Nw4",
+            authDomain: "calendrierconnecter.firebaseapp.com",
+            databaseURL: "https://calendrierconnecter-default-rtdb.firebaseio.com",
+            projectId: "calendrierconnecter",
+            storageBucket: "calendrierconnecter.firebasestorage.app",
+            messagingSenderId: "883066090334",
+            appId: "1:883066090334:web:682a8bac7a68eef12015cf"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let currentCityId = 'strasbourg';
+        let validated = { strasbourg: [false,false,false,false,false], pavlodar: [false,false,false,false,false] };
+        let currentPayerIdx = -1;
+
+        db.ref('love_message').on('value', (snapshot) => {
+            const val = snapshot.val();
+            if(val !== null && document.activeElement !== document.getElementById('msg-input')) {
+                document.getElementById('msg-input').value = val;
+            }
+        });
+
+        db.ref('validations').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const today = new Date().toDateString();
+                if (data.date !== today) {
+                    db.ref('validations').set({ date: today, strasbourg: [false,false,false,false,false], pavlodar: [false,false,false,false,false] });
+                } else {
+                    validated.strasbourg = data.strasbourg || [false,false,false,false,false];
+                    validated.pavlodar = data.pavlodar || [false,false,false,false,false];
+                }
+            }
+        });
+
+        function sendToFirebase(text) { db.ref('love_message').set(text); }
+
+        function saveValidations() {
+            db.ref('validations').update({ date: new Date().toDateString(), strasbourg: validated.strasbourg, pavlodar: validated.pavlodar });
+        }
+
+        const data = {
+            strasbourg: { offset: 1, user: "Adam", times: [{h:7,m:4},{h:12,m:31},{h:14,m:23},{h:16,m:40},{h:18,m:40}] },
+            pavlodar: { offset: 5, user: "Sheïla", times: [{h:5,m:55},{h:11,m:53},{h:13,m:29},{h:15,m:45},{h:17,m:45}] }
+        };
+
+        function toggleCloud() {
+            // Désactivé car affiché par défaut
+        }
+
+        function changeCity(cityId, btn) {
+            currentCityId = cityId;
+            document.querySelectorAll('.city-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('user-focus').innerText = data[cityId].user;
+            document.getElementById('city-name').innerText = cityId.toUpperCase();
+            updateDisplay();
+        }
+
+        function validateCurrent() {
+            if (currentPayerIdx !== -1) {
+                validated[currentCityId][currentPayerIdx] = true;
+                document.getElementById('snake').classList.add('smoke-out');
+                saveValidations();
+            }
+        }
+
+        function manualToggle(idx) {
+            validated[currentCityId][idx] = !validated[currentCityId][idx];
+            if (idx === currentPayerIdx && validated[currentCityId][idx]) document.getElementById('snake').classList.add('smoke-out');
+            saveValidations();
+        }
+
+        function getCityNow() {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            return new Date(utc + (3600000 * data[currentCityId].offset));
+        }
+
+        function updateDisplay() {
+            const cityNow = getCityNow();
+            data[currentCityId].times.forEach((t, i) => {
+                const d = new Date(cityNow); d.setHours(t.h, t.m, 0);
+                document.getElementById('t'+i).innerText = d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+            });
+        }
+
+        function refresh() {
+            const cityNow = getCityNow();
+            document.getElementById('clock').innerText = cityNow.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+            const times = data[currentCityId].times.map(t => {
+                const d = new Date(cityNow); d.setHours(t.h, t.m, 0); return d;
+            });
+
+            const isNight = cityNow < times[0] || cityNow > times[3];
+            document.body.classList.toggle('dark-mode', isNight);
+
+            const sun = document.getElementById('sun');
+            const moon = document.getElementById('moon');
+            if(!isNight) {
+                sun.style.display = "block"; moon.style.display = "none";
+                const p = (cityNow - times[0]) / (times[3] - times[0]);
+                sun.style.left = `calc(${p*100}% - 22px)`;
+                sun.style.bottom = (Math.sin(p * Math.PI) * 200 + 190) + "px";
+            } else {
+                sun.style.display = "none"; moon.style.display = "block";
+                let s = new Date(times[3]), e = new Date(times[0]);
+                if(cityNow > times[3]) e.setDate(e.getDate()+1); else s.setDate(s.getDate()-1);
+                const p = (cityNow - s) / (e - s);
+                moon.style.left = `calc(${p*100}% - 22px)`;
+                moon.style.bottom = (Math.sin(p * Math.PI) * 200 + 190) + "px";
+            }
+
+            currentPayerIdx = -1;
+            for(let i=0; i<5; i++) {
+                const check = document.getElementById('c'+i);
+                document.getElementById('n'+i).classList.remove('active-prière');
+                check.style.display = validated[currentCityId][i] ? 'flex' : 'none';
+                if(cityNow > times[i]) currentPayerIdx = i;
+            }
+            if(currentPayerIdx !== -1) document.getElementById('n'+currentPayerIdx).classList.add('active-prière');
+
+            const snake = document.getElementById('snake');
+            if(currentPayerIdx != -1 && currentPayerIdx < 4 && !validated[currentCityId][currentPayerIdx] && !snake.classList.contains('smoke-out')) {
+                snake.style.display = 'flex';
+                const mins = Math.floor((cityNow - times[currentPayerIdx]) / 60000);
+                const nodes = document.querySelectorAll('.node');
+                const xStart = nodes[currentPayerIdx].offsetLeft + (nodes[currentPayerIdx].offsetWidth/2);
+                const xEnd = nodes[currentPayerIdx+1].offsetLeft + (nodes[currentPayerIdx+1].offsetWidth/2);
+                snake.style.left = xStart + "px";
+                snake.style.width = Math.min(mins * 1.5 + 40, xEnd - xStart) + "px";
+                snake.style.top = (nodes[currentPayerIdx].offsetTop - 45) + "px";
+            } else {
+                snake.style.display = 'none';
+            }
+        }
+
+        // SYSTEME D'ANIMATION ( JOUR & NUIT )
+        const canvas = document.getElementById('warpCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        
+        // Objets Nuit (Hyperespace) - OPTIMISÉ
+        let starsRows = [], bgStars = [];
+        const numStars = 1500; // Réduit drastiquement pour la performance
+        const numBgStars = 300;
+        const speed = 0.001, angleRad = 35 * (Math.PI / 180);
+
+        // Objets Jour (Nuages & Particules)
+        let clouds = [], sunMotes = [];
+        const numClouds = 5; // Réduit
+        const numMotes = 30; // Réduit
+
+        function getStarColor(x, opacity) {
+            const ratio = x / width;
+            const r = Math.floor(255 * (1 - ratio) + 255 * ratio);
+            const g = Math.floor(255 * (1 - ratio) + 255 * ratio);
+            const b = Math.floor(255 * (1 - ratio) + 255 * ratio);
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+
+        // --- CLASSES NUIT ---
+        class Star {
+            constructor(isBackground = false) {
+                this.isBackground = isBackground;
+                this.reset();
+            }
+            reset() {
+                this.x = (Math.random() - 0.5) * 3.5; 
+                this.y = (Math.random() - 0.5) * 2.5;
+                this.z = this.isBackground ? 1 : Math.random(); 
+                this.prevZ = this.z;
+                this.brightness = 0.5 + Math.random() * 0.5;
+                this.twinklePhase = Math.random() * Math.PI * 2;
+                this.twinkleSpeed = 0.03 + Math.random() * 0.07;
+            }
+            update() {
+                if (this.isBackground) {
+                    this.x -= 0.0003; 
+                    if (this.x < -2) this.x = 2;
+                } else {
+                    this.prevZ = this.z;
+                    this.z -= speed; 
+                    if (this.z <= 0) this.reset();
+                }
+                this.twinklePhase += this.twinkleSpeed;
+            }
+            draw() {
+                const angleOffset = Math.tan(angleRad) * (1 - this.z) * (width / 2);
+                const x2d = (this.x / this.z) * (width / 2) + (width / 2) + angleOffset;
+                const y2d = (this.y / this.z) * (height / 2) + (height / 2);
+                
+                // Sortir si hors écran
+                if (x2d < 0 || x2d > width || y2d < 0 || y2d > height) return;
+
+                const twinkle = 1;
+                
+                if (this.isBackground) {
+                    ctx.fillStyle = `rgba(255, 255, 255, ${this.brightness * 0.4 * twinkle})`;
+                    ctx.fillRect(x2d % width, y2d % height, 1, 1); 
+                } else {
+                    const closeness = 1 - this.z;
+                    if (closeness < 0.5) {
+                        ctx.fillStyle = `rgba(255, 255, 255, ${closeness * twinkle})`;
+                        ctx.fillRect(x2d, y2d, 1.5, 1.5);
+                    } else {
+                        const radius = (0.1 + (closeness * closeness) * 2.5) * twinkle; 
+                        const glowSize = radius * 4;
+                        const gradient = ctx.createRadialGradient(x2d, y2d, 0, x2d, y2d, glowSize);
+                        const color = getStarColor(x2d, 0.6 * twinkle);
+                        gradient.addColorStop(0, 'white');
+                        gradient.addColorStop(0.2, 'rgba(255,255,255,0.8)');
+                        gradient.addColorStop(0.5, color);
+                        gradient.addColorStop(1, 'transparent');
+                        ctx.fillStyle = gradient; 
+                        ctx.beginPath(); ctx.arc(x2d, y2d, glowSize, 0, Math.PI * 2); ctx.fill();
+                    }
+                }
+            }
+        }
+
+        // --- CLASSES JOUR ---
+        class Cloud {
+            constructor() { this.reset(); this.x = Math.random() * width; }
+            reset() {
+                this.x = -400;
+                this.y = Math.random() * (height * 0.6);
+                this.size = 200 + Math.random() * 300;
+                this.speed = 0.2 + Math.random() * 0.5;
+                this.opacity = 0.1 + Math.random() * 0.2;
+            }
+            update() {
+                this.x += this.speed;
+                if (this.x > width + 400) this.reset();
+            }
+            draw() {
+                const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+                grad.addColorStop(0, `rgba(255, 255, 255, ${this.opacity})`);
+                grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+
+        class SunMote {
+            constructor() { this.reset(); this.y = Math.random() * height; }
+            reset() {
+                this.x = Math.random() * width;
+                this.y = height + 10;
+                this.size = Math.random() * 2;
+                this.speedY = -(0.5 + Math.random() * 1);
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random();
+                this.fade = Math.random() * 0.01;
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                this.opacity -= 0.005;
+                if (this.opacity <= 0 || this.y < -10) this.reset();
+            }
+            draw() {
+                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity * 0.5})`;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+
+        function initWarp() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            starsRows = Array.from({ length: numStars }, () => new Star(false));
+            bgStars = Array.from({ length: numBgStars }, () => new Star(true));
+            clouds = Array.from({ length: numClouds }, () => new Cloud());
+            sunMotes = Array.from({ length: numMotes }, () => new SunMote());
+        }
+
+        function animateWarp() {
+            ctx.clearRect(0, 0, width, height);
+            const isDark = document.body.classList.contains('dark-mode');
+
+            if (isDark) {
+                bgStars.forEach(s => { s.update(); s.draw(); });
+                starsRows.forEach(s => { s.update(); s.draw(); });
+            } else {
+                clouds.forEach(c => { c.update(); c.draw(); });
+                sunMotes.forEach(m => { m.update(); m.draw(); });
+            }
+            requestAnimationFrame(animateWarp);
+        }
+
+        window.addEventListener('resize', initWarp);
+        initWarp();
+        animateWarp();
+
+        updateDisplay();
+        setInterval(refresh, 1000);
+    </script>
+</body>
+</html>
