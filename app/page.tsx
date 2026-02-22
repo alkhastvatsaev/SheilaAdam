@@ -14,8 +14,19 @@ type VoiceMessage = {
 };
 
 export default function AthanPage() {
+  // Identity: stored permanently on device
+  const [identity, setIdentity] = useState<CityId | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('user_identity') as CityId | null;
+      if (saved === 'strasbourg' || saved === 'pavlodar') return saved;
+    }
+    return null; // null = not yet chosen (first launch)
+  });
+
   const [cityId, setCityId] = useState<CityId>(() => {
     if (typeof window !== 'undefined') {
+      const identity = localStorage.getItem('user_identity') as CityId | null;
+      if (identity === 'strasbourg' || identity === 'pavlodar') return identity;
       const saved = localStorage.getItem('preferred_city') as CityId | null;
       if (saved && (saved === 'strasbourg' || saved === 'pavlodar')) return saved;
     }
@@ -81,6 +92,13 @@ export default function AthanPage() {
       pavlodar: newValidations.pavlodar
     });
   }, []);
+
+  const chooseIdentity = (chosen: CityId) => {
+    localStorage.setItem('user_identity', chosen);
+    localStorage.setItem('preferred_city', chosen);
+    setIdentity(chosen);
+    setCityId(chosen);
+  };
 
   const handleCityChange = (newCity: CityId) => {
     setCityId(newCity);
@@ -363,6 +381,39 @@ export default function AthanPage() {
   return (
     <main className="relative flex flex-col items-center justify-center w-full h-screen overflow-hidden overscroll-none touch-none">
       <WarpCanvas isDark={isDark} sunPos={celestialPos} />
+
+      {/* One-time identity onboarding overlay */}
+      <AnimatePresence>
+        {identity === null && (
+          <motion.div
+            id="onboarding"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.4 }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              id="onboarding-inner"
+            >
+              <div id="onboarding-title">Qui es-tu ?</div>
+              <div id="onboarding-sub">Cette app se souviendra de toi pour toujours.</div>
+              <div id="onboarding-choices">
+                <button className="identity-card" onClick={() => chooseIdentity('strasbourg')}>
+                  <span className="identity-name">Adam</span>
+                  <span className="identity-city">Strasbourg</span>
+                </button>
+                <button className="identity-card" onClick={() => chooseIdentity('pavlodar')}>
+                  <span className="identity-name">Sheïla</span>
+                  <span className="identity-city">Pavlodar</span>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="city-selector">
         <button className={`city-btn ${cityId === 'strasbourg' ? 'active' : ''}`} onClick={() => handleCityChange('strasbourg')}>Strasbourg</button>

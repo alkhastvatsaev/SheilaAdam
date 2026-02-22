@@ -67,6 +67,88 @@ main {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
+/* ONBOARDING OVERLAY */
+#onboarding {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 4, 10, 0.92);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  padding: 40px 24px;
+}
+
+#onboarding-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 360px;
+}
+
+#onboarding-title {
+  font-size: 2.6rem;
+  font-weight: 200;
+  color: #ffffff;
+  letter-spacing: -1px;
+  text-align: center;
+}
+
+#onboarding-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  letter-spacing: 0.3px;
+  margin-bottom: 16px;
+}
+
+#onboarding-choices {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.identity-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 32px 16px;
+  border: none;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  touch-action: auto;
+}
+
+.identity-card:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.identity-name {
+  font-size: 1.8rem;
+  font-weight: 300;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.identity-city {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
 #warpCanvas {
   position: fixed;
   top: 0;
