@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { db } from '@/lib/firebase';
 import { ref, onValue, set } from 'firebase/database';
 import { getPrayerTimesForCity, CITIES, CityId } from '@/lib/athan';
@@ -14,7 +14,13 @@ type VoiceMessage = {
 };
 
 export default function AthanPage() {
-  const [cityId, setCityId] = useState<CityId>('strasbourg');
+  const [cityId, setCityId] = useState<CityId>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('preferred_city') as CityId | null;
+      if (saved && (saved === 'strasbourg' || saved === 'pavlodar')) return saved;
+    }
+    return 'strasbourg';
+  });
   const [validated, setValidated] = useState<Record<string, boolean[]>>({
     strasbourg: [false, false, false, false, false],
     pavlodar: [false, false, false, false, false]
@@ -75,6 +81,11 @@ export default function AthanPage() {
       pavlodar: newValidations.pavlodar
     });
   }, []);
+
+  const handleCityChange = (newCity: CityId) => {
+    setCityId(newCity);
+    localStorage.setItem('preferred_city', newCity);
+  };
 
   const handleManualToggle = (idx: number) => {
     const newValidated = { ...validated };
@@ -241,12 +252,45 @@ export default function AthanPage() {
     return () => document.removeEventListener('touchmove', preventDefault);
   }, []);
 
-  // Voice message capsule rendering
+  // SVG Mic Icon (minimalist Apple-style)
+  const MicIcon = ({ size = 20, color = 'white' }: { size?: number; color?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="2" width="6" height="12" rx="3" />
+      <path d="M5 10a7 7 0 0 0 14 0" />
+      <line x1="12" y1="17" x2="12" y2="22" />
+      <line x1="8" y1="22" x2="16" y2="22" />
+    </svg>
+  );
+
+  // Stop icon SVG
+  const StopIcon = ({ size = 16, color = 'white' }: { size?: number; color?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+    </svg>
+  );
+
+  // Play icon SVG
+  const PlayIcon = ({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+      <polygon points="5,3 19,12 5,21" />
+    </svg>
+  );
+
+  const dragProps = {
+    id: 'voice-capsule' as const,
+    drag: 'y' as const,
+    dragMomentum: false,
+    dragElastic: 0.08,
+    dragConstraints: { top: -200, bottom: 200 },
+    whileTap: { cursor: 'grabbing' },
+    style: { cursor: 'grab', touchAction: 'none' } as React.CSSProperties,
+  };
+
   const renderVoiceCapsule = () => {
     if (isRecording) {
       return (
-        <div id="voice-capsule">
-          <div className="voice-info">
+        <motion.div {...dragProps}>
+          <div className="voice-info" onPointerDown={e => e.stopPropagation()}>
             <div className="voice-from">{CITIES[cityId].user} • En cours</div>
             <div className="voice-status">
               <div className="waveform">
@@ -254,19 +298,31 @@ export default function AthanPage() {
               </div>
             </div>
           </div>
-          <span className="voice-timer">{formatTime(recordingTime)}</span>
-          <button className="voice-btn recording" onClick={stopRecording}>■</button>
-        </div>
+          <span className="voice-timer" onPointerDown={e => e.stopPropagation()}>{formatTime(recordingTime)}</span>
+          <button
+            className="voice-btn recording"
+            onPointerDown={e => e.stopPropagation()}
+            onClick={stopRecording}
+          >
+            <StopIcon />
+          </button>
+        </motion.div>
       );
     }
 
     if (voiceMessage) {
       return (
-        <motion.div id="voice-capsule" animate={{ y: [0, -6, 3, -3, 0] }} transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}>
-          <button className={`voice-btn ${isPlaying ? 'stop-play' : 'play'}`} onClick={playMessage}>
-            {isPlaying ? '■' : '▶'}
+        <motion.div {...dragProps}>
+          <button
+            className={`voice-btn ${isPlaying ? 'stop-play' : 'play'}`}
+            onPointerDown={e => e.stopPropagation()}
+            onClick={playMessage}
+          >
+            {isPlaying
+              ? <StopIcon size={14} color="var(--text)" />
+              : <PlayIcon size={14} color="var(--text)" />}
           </button>
-          <div className="voice-info">
+          <div className="voice-info" onPointerDown={e => e.stopPropagation()}>
             <div className="voice-from">{voiceMessage.from}</div>
             <div className="voice-status">
               {isPlaying
@@ -274,19 +330,32 @@ export default function AthanPage() {
                 : 'Message vocal'}
             </div>
           </div>
-          <button className="voice-btn mic" onClick={startRecording} title="Enregistrer une réponse">🎙</button>
+          <button
+            className="voice-btn mic"
+            onPointerDown={e => e.stopPropagation()}
+            onClick={startRecording}
+            title="Enregistrer une réponse"
+          >
+            <MicIcon />
+          </button>
         </motion.div>
       );
     }
 
     // Empty state
     return (
-      <motion.div id="voice-capsule" animate={{ y: [0, -6, 3, -3, 0] }} transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}>
-        <div className="voice-info">
+      <motion.div {...dragProps}>
+        <div className="voice-info" onPointerDown={e => e.stopPropagation()}>
           <div className="voice-from">{CITIES[cityId].user}</div>
           <div className="voice-status">Laisser un message vocal…</div>
         </div>
-        <button className="voice-btn mic" onClick={startRecording}>🎙</button>
+        <button
+          className="voice-btn mic"
+          onPointerDown={e => e.stopPropagation()}
+          onClick={startRecording}
+        >
+          <MicIcon />
+        </button>
       </motion.div>
     );
   };
@@ -296,8 +365,8 @@ export default function AthanPage() {
       <WarpCanvas isDark={isDark} sunPos={celestialPos} />
 
       <div className="city-selector">
-        <button className={`city-btn ${cityId === 'strasbourg' ? 'active' : ''}`} onClick={() => setCityId('strasbourg')}>Strasbourg</button>
-        <button className={`city-btn ${cityId === 'pavlodar' ? 'active' : ''}`} onClick={() => setCityId('pavlodar')}>Pavlodar</button>
+        <button className={`city-btn ${cityId === 'strasbourg' ? 'active' : ''}`} onClick={() => handleCityChange('strasbourg')}>Strasbourg</button>
+        <button className={`city-btn ${cityId === 'pavlodar' ? 'active' : ''}`} onClick={() => handleCityChange('pavlodar')}>Pavlodar</button>
       </div>
 
       {renderVoiceCapsule()}
