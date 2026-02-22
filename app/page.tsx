@@ -188,20 +188,8 @@ export default function AthanPage() {
     return `${hours}:${minutes}`;
   };
 
-  useEffect(() => {
-    // Prevent the elastic "rubber-band" scrolling on iOS
-    const preventDefault = (e: TouchEvent) => {
-      if ((e.target as HTMLElement).closest('#msg-input, .city-btn')) return;
-      if (e.touches.length > 1) return; // Allow pinch to zoom if ever needed
-      e.preventDefault();
-    };
-
-    document.addEventListener('touchmove', preventDefault, { passive: false });
-    return () => document.removeEventListener('touchmove', preventDefault);
-  }, []);
-
   return (
-    <main className="relative flex flex-col items-center justify-center w-full h-screen overflow-hidden overscroll-none touch-none">
+    <main className="relative flex flex-col items-center justify-center w-full h-screen overflow-hidden">
       <WarpCanvas isDark={isDark} sunPos={celestialPos} />
 
       <div className="city-selector">
