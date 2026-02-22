@@ -103,8 +103,13 @@ export default function AthanPage() {
       const isNight = nowTime < times[0].getTime() || nowTime > times[3].getTime();
       
       setIsDark(isNight);
-      if (isNight) document.body.classList.add('dark');
-      else document.body.classList.remove('dark');
+      if (isNight) {
+        document.body.classList.add('dark');
+        document.documentElement.style.background = '#02040a';
+      } else {
+        document.body.classList.remove('dark');
+        document.documentElement.style.background = '#ffffff';
+      }
 
       let lastIdx = -1;
       times.forEach((t, i) => {

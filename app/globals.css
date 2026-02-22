@@ -17,6 +17,11 @@ body.dark {
   --card: rgba(255, 255, 255, 0.08);
 }
 
+/* Make html also take the background so Safari's overscroll area doesn't flash white */
+html {
+  background: #02040a;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
