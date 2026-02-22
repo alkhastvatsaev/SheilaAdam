@@ -194,27 +194,17 @@ export default function AthanPage() {
         >Pavlodar</button>
       </div>
 
-      <motion.div 
-        key={cityId}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        id="user-focus"
-      >
-        {CITIES[cityId].user}
-      </motion.div>
-
+      {/* Message cloud - absolutely placed near top */}
       <motion.div 
         id="message-cloud"
         animate={{ 
-          y: [0, -10, 5, -5, 0],
-          x: ["-50%", "-48%", "-52%", "-50%"]
+          y: [0, -8, 4, -4, 0],
         }}
         transition={{ 
           duration: 8, 
           repeat: Infinity, 
           ease: "easeInOut" 
         }}
-        style={{ top: '100px', left: '50%' }}
       >
         <div className="cloud-body" />
         <input 
@@ -230,6 +220,17 @@ export default function AthanPage() {
         />
       </motion.div>
 
+      {/* Name */}
+      <motion.div 
+        key={cityId}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        id="user-focus"
+      >
+        {CITIES[cityId].user}
+      </motion.div>
+
+      {/* Sky area: celestial body + prayer timeline */}
       <div id="sky-area">
         <div 
           id={isDark ? "moon" : "sun"} 
@@ -237,7 +238,6 @@ export default function AthanPage() {
           style={{ 
             left: celestialPos.left, 
             bottom: celestialPos.bottom,
-            display: 'block'
           }} 
         />
         
@@ -253,7 +253,7 @@ export default function AthanPage() {
                 style={{
                   left: `${(currentPrayerIdx + 0.5) * 100 / 5}%`,
                   transform: 'translateX(-50%)',
-                  bottom: '120px' // Positioning above the nodes
+                  bottom: '90px'
                 }}
               >
                 Valider
