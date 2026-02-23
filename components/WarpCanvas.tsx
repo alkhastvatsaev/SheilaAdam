@@ -247,8 +247,8 @@ export default function WarpCanvas({ isDark, sunPos }: WarpCanvasProps) {
         stars.forEach(s => { s.update(); s.draw(); });
       } else {
         // Sea Background
-        drawBeach();
         drawSea();
+        drawBeach();
 
         clouds.forEach(c => { c.update(); c.draw(); });
         birds.forEach(b => { b.update(); b.draw(); });
