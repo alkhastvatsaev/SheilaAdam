@@ -173,6 +173,19 @@ main {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.notif-btn {
+  position: absolute;
+  top: max(25px, env(safe-area-inset-top));
+  right: 20px;
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 10px;
+  cursor: pointer;
+  z-index: 101;
+  touch-action: auto;
+}
+
 .city-btn {
   padding: 8px 18px;
   border: none;

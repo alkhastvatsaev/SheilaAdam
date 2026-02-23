@@ -343,7 +343,7 @@ export default function AthanPage() {
     return () => document.removeEventListener('touchmove', preventDefault);
   }, []);
 
-  // SVG Mic Icon (minimalist Apple-style)
+  // SVG Icons
   const MicIcon = ({ size = 20, color = 'white' }: { size?: number; color?: string }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <rect x="9" y="2" width="6" height="12" rx="3" />
@@ -353,7 +353,13 @@ export default function AthanPage() {
     </svg>
   );
 
-  // Stop icon SVG
+  const BellIcon = ({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  );
+
   const StopIcon = ({ size = 16, color = 'white' }: { size?: number; color?: string }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
       <rect x="4" y="4" width="16" height="16" rx="2" />
@@ -490,15 +496,23 @@ export default function AthanPage() {
 
       <div className="city-selector">
         <button className={`city-btn ${cityId === 'strasbourg' ? 'active' : ''}`} onClick={() => handleCityChange('strasbourg')}>Strasbourg</button>
-        <button 
-          className="city-btn" 
-          onClick={() => identity && subscribeToNotifications(identity)}
-          style={{ opacity: isSubscribed ? 0.4 : 1 }}
-        >
-          {isSubscribed ? '🔔' : '🔕'}
-        </button>
         <button className={`city-btn ${cityId === 'pavlodar' ? 'active' : ''}`} onClick={() => handleCityChange('pavlodar')}>Pavlodar</button>
       </div>
+
+      <AnimatePresence>
+        {!isSubscribed && identity && (
+          <motion.button 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.4 }}
+            whileHover={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => subscribeToNotifications(identity)}
+            className="notif-btn"
+          >
+            <BellIcon />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {renderVoiceCapsule()}
 
