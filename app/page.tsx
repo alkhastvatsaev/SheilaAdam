@@ -538,7 +538,9 @@ export default function AthanPage() {
               : <PlayIcon size={14} color="var(--text)" />}
           </button>
           <div className="voice-info">
-            <div className="voice-from">{voiceMessage.from}</div>
+            <div className="voice-from">
+              {voiceMessage.from} • {formatLocalTime(new Date(voiceMessage.timestamp), CITIES[cityId].offset)}
+            </div>
             <div className="voice-status">
               {isPlaying
                 ? <div className="waveform">{[1,2,3,4,5,6,7].map(i => <div key={i} className="waveform-bar" />)}</div>
