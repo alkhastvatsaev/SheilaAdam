@@ -186,30 +186,6 @@ export default function WarpCanvas({ isDark, sunPos }: WarpCanvasProps) {
       birds = Array.from({ length: 4 }, () => new Bird());
     };
 
-    const drawBeach = () => {
-      const beachHeight = height * 0.12;
-      
-      // Foam/Wave movement
-      const foamOffset = Math.sin(waveOffset * 2) * 5;
-
-      // 1. Sand
-      ctx!.fillStyle = '#f6d7b0';
-      ctx!.beginPath();
-      ctx!.moveTo(0, height + 100);
-      ctx!.lineTo(0, height - beachHeight);
-      ctx!.bezierCurveTo(width * 0.3, height - beachHeight - 30, width * 0.7, height - beachHeight + 20, width, height - beachHeight - 10);
-      ctx!.lineTo(width, height + 100);
-      ctx!.fill();
-
-      // 2. Foam (The wave edge)
-      ctx!.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx!.lineWidth = 2;
-      ctx!.beginPath();
-      ctx!.moveTo(0, height - beachHeight - 2 + foamOffset);
-      ctx!.bezierCurveTo(width * 0.3, height - beachHeight - 32 + foamOffset, width * 0.7, height - beachHeight + 18 + foamOffset, width, height - beachHeight - 12 + foamOffset);
-      ctx!.stroke();
-    };
-
     const drawSea = () => {
       waveOffset += 0.004;
       const seaHeight = height * 0.28;
@@ -250,6 +226,18 @@ export default function WarpCanvas({ isDark, sunPos }: WarpCanvasProps) {
       ctx!.lineTo(width, height + 100);
       ctx!.lineTo(0, height + 100);
       ctx!.fill();
+
+      // Layer 4: Deep Front Wave (Replacement for Sand)
+      ctx!.fillStyle = 'rgba(0, 50, 200, 0.08)';
+      ctx!.beginPath();
+      ctx!.moveTo(0, height + 100);
+      ctx!.lineTo(0, seaTop + 100);
+      for (let x = 0; x <= width; x += 15) {
+        ctx!.lineTo(x, seaTop + 100 + Math.sin(x * 0.01 + waveOffset * 1.5) * 6);
+      }
+      ctx!.lineTo(width, height + 100);
+      ctx!.lineTo(0, height + 100);
+      ctx!.fill();
     };
 
     const animate = () => {
@@ -261,7 +249,6 @@ export default function WarpCanvas({ isDark, sunPos }: WarpCanvasProps) {
       } else {
         // Sea Background
         drawSea();
-        drawBeach();
 
         clouds.forEach(c => { c.update(); c.draw(); });
         birds.forEach(b => { b.update(); b.draw(); });

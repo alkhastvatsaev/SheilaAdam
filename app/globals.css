@@ -18,10 +18,6 @@ body.dark {
 }
 
 /* Make html also take the background so Safari's overscroll area doesn't flash white */
-html {
-  background-color: transparent;
-}
-
 * {
   box-sizing: border-box;
   margin: 0;
@@ -31,6 +27,9 @@ html {
 
 html {
   height: 100dvh;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
 }
 
 body {
@@ -406,10 +405,28 @@ body.dark #voice-capsule {
 #history-list {
   flex: 1;
   overflow-y: auto;
-  padding: 8px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+
+#history-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+#history-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#history-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+body.dark #history-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .history-item {
@@ -464,9 +481,7 @@ body.dark #voice-capsule {
   opacity: 0.8;
 }
 
-#history-list::-webkit-scrollbar {
-  display: none;
-}
+/* DELETE REDUNDANT SCROLLBAR HIDER */
 
 #msg-input {
   background: transparent;
@@ -616,4 +631,19 @@ body.dark #voice-capsule {
 
 .city-display {
   display: none;
+}
+#bottom-fade {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 180px;
+  pointer-events: none;
+  z-index: 5;
+  background: linear-gradient(to top, #ffffff 0%, rgba(255,255,255,0.8) 40%, transparent 100%);
+  transition: background 1.5s ease;
+}
+
+body.dark #bottom-fade {
+  background: linear-gradient(to top, #02040a 0%, rgba(2, 4, 10, 0.8) 40%, transparent 100%);
 }
