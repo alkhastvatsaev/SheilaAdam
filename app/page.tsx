@@ -394,7 +394,7 @@ export default function AthanPage() {
       if (typeof window !== 'undefined' && 'vibrate' in navigator) {
         navigator.vibrate(50);
       }
-    }, 400); // Shorter, like native iOS
+    }, 1000); // 1 second - makes it very intentional and avoids drag conflict
   };
 
   const endLongPress = () => {
@@ -498,6 +498,7 @@ export default function AthanPage() {
     onPointerDown: startLongPress,
     onPointerUp: endLongPress,
     onPointerLeave: endLongPress,
+    onDragStart: endLongPress,
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
   };
 
