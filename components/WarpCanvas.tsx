@@ -186,6 +186,17 @@ export default function WarpCanvas({ isDark, sunPos }: WarpCanvasProps) {
       birds = Array.from({ length: 4 }, () => new Bird());
     };
 
+    const drawBeach = () => {
+      const beachHeight = height * 0.1;
+      ctx!.fillStyle = '#fdf8f1'; // Ultra-soft minimalist sand
+      ctx!.beginPath();
+      ctx!.moveTo(0, height + 100);
+      ctx!.lineTo(0, height - beachHeight);
+      ctx!.quadraticCurveTo(width / 2, height - beachHeight - 20, width, height - beachHeight);
+      ctx!.lineTo(width, height + 100);
+      ctx!.fill();
+    };
+
     const drawSea = () => {
       waveOffset += 0.004;
       const seaHeight = height * 0.28;
@@ -236,6 +247,7 @@ export default function WarpCanvas({ isDark, sunPos }: WarpCanvasProps) {
         stars.forEach(s => { s.update(); s.draw(); });
       } else {
         // Sea Background
+        drawBeach();
         drawSea();
 
         clouds.forEach(c => { c.update(); c.draw(); });
