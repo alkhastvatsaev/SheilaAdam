@@ -40,6 +40,7 @@ export default function AthanPage() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentPrayerIdx, setCurrentPrayerIdx] = useState(-1);
   const [isDark, setIsDark] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [snakeSmoke, setSnakeSmoke] = useState(false);
   const [voiceHistory, setVoiceHistory] = useState<VoiceMessage[]>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -190,6 +191,7 @@ export default function AthanPage() {
       times.forEach((t, i) => { if (nowTime > t.getTime()) lastIdx = i; });
       setCurrentPrayerIdx(lastIdx);
     }, 1000);
+    setMounted(true);
     return () => clearInterval(timer);
   }, [cityId]);
 
@@ -651,7 +653,9 @@ export default function AthanPage() {
       </motion.div>
 
       <div id="sky-area">
-        <div id={isDark ? 'moon' : 'sun'} className="celestial" style={{ left: celestialPos.left, bottom: celestialPos.bottom }} />
+        {mounted && (
+          <div id={isDark ? 'moon' : 'sun'} className="celestial" style={{ left: celestialPos.left, bottom: celestialPos.bottom }} />
+        )}
         <div id="timeline">
           <AnimatePresence>
             {currentPrayerIdx !== -1 && currentPrayerIdx < 4 && !validated[cityId][currentPrayerIdx] && !snakeSmoke && (
@@ -680,7 +684,7 @@ export default function AthanPage() {
       </div>
 
       <div id="bottom-bar">
-        <div id="clock">{formatLocalTime(currentTime, CITIES[cityId].offset)}</div>
+        <div id="clock">{mounted ? formatLocalTime(currentTime, CITIES[cityId].offset) : '--:--'}</div>
         <div className="city-display">{CITIES[cityId].name}</div>
       </div>
     </main>
