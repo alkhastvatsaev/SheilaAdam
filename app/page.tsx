@@ -574,7 +574,7 @@ export default function AthanPage() {
   };
 
   return (
-    <main className="relative flex flex-col items-center justify-center w-full h-screen overflow-hidden overscroll-none touch-none">
+    <main className="relative flex flex-col items-center justify-center w-full h-[100dvh] overflow-hidden overscroll-none touch-none">
       <WarpCanvas isDark={isDark} sunPos={celestialPos} />
 
       {/* One-time identity onboarding overlay */}
