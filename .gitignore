@@ -24,6 +24,7 @@ yarn-error.log*
 
 # local env files
 .env*.local
+VERCEL_VARIABLES_IMPORT.txt
 
 # vercel
 .vercel
