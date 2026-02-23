@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { db } from '@/lib/firebase';
-import { ref, onValue, set, get } from 'firebase/database';
+import { ref, onValue, set, get, push } from 'firebase/database';
 import { getPrayerTimesForCity, CITIES, CityId } from '@/lib/athan';
 import WarpCanvas from '@/components/WarpCanvas';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,6 +41,8 @@ export default function AthanPage() {
   const [currentPrayerIdx, setCurrentPrayerIdx] = useState(-1);
   const [isDark, setIsDark] = useState(false);
   const [snakeSmoke, setSnakeSmoke] = useState(false);
+  const [voiceHistory, setVoiceHistory] = useState<VoiceMessage[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -50,6 +52,7 @@ export default function AthanPage() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Push notification state
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -72,6 +75,20 @@ export default function AthanPage() {
     const unsub = onValue(vmRef, (snapshot) => {
       const val = snapshot.val();
       setVoiceMessage(val ?? null);
+    });
+    return () => unsub();
+  }, []);
+
+  // Firebase: sync voice history
+  useEffect(() => {
+    const vhRef = ref(db, 'voice_history');
+    const unsub = onValue(vhRef, (snapshot) => {
+      const val = snapshot.val();
+      if (val) {
+        const history = Object.values(val) as VoiceMessage[];
+        // Sort by newest first
+        setVoiceHistory(history.sort((a, b) => b.timestamp - a.timestamp));
+      }
     });
     return () => unsub();
   }, []);
@@ -276,6 +293,7 @@ export default function AthanPage() {
             timestamp: Date.now(),
           };
           set(ref(db, 'voice_message'), newMsg);
+          push(ref(db, 'voice_history'), newMsg);
           notifyPartner(); // Trigger push
         };
         reader.readAsDataURL(blob);
@@ -368,6 +386,30 @@ export default function AthanPage() {
     return () => document.removeEventListener('touchmove', preventDefault);
   }, []);
 
+  // Long press for history
+  const startLongPress = () => {
+    if (isRecording) return;
+    longPressTimerRef.current = setTimeout(() => {
+      setShowHistory(true);
+      if (window.navigator.vibrate) window.navigator.vibrate(50);
+    }, 600);
+  };
+
+  const endLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+  };
+
+  const playHistoryItem = (audioData: string) => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+    }
+    const audio = new Audio(audioData);
+    audioRef.current = audio;
+    audio.play();
+  };
+
   // SVG Icons
   const MicIcon = ({ size = 20, color = 'white' }: { size?: number; color?: string }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -398,6 +440,51 @@ export default function AthanPage() {
     </svg>
   );
 
+  const renderHistoryOverlay = () => (
+    <AnimatePresence>
+      {showHistory && (
+        <motion.div 
+          id="history-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setShowHistory(false)}
+        >
+          <motion.div 
+            id="history-content"
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div id="history-header">
+              <h2>Anciens vocaux</h2>
+              <button className="close-btn" onClick={() => setShowHistory(false)}>×</button>
+            </div>
+            <div id="history-list">
+              {voiceHistory.length === 0 ? (
+                <div style={{ padding: '40px', textAlign: 'center', opacity: 0.5 }}>
+                  Aucun message enregistré.
+                </div>
+              ) : (
+                voiceHistory.map((msg, i) => (
+                  <button key={i} className="history-item" onClick={() => playHistoryItem(msg.audio)}>
+                    <div className="history-icon"><PlayIcon size={14} color="white" /></div>
+                    <div className="history-details">
+                      <div className="history-name">{msg.from}</div>
+                      <div className="history-time">{new Date(msg.timestamp).toLocaleString('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+                    </div>
+                    <div className="history-play">Écouter</div>
+                  </button>
+                ))
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   const dragProps = {
     id: 'voice-capsule' as const,
     drag: 'y' as const,
@@ -406,6 +493,9 @@ export default function AthanPage() {
     dragConstraints: { top: -200, bottom: 200 },
     whileTap: { cursor: 'grabbing' },
     style: { cursor: 'grab', touchAction: 'none' } as React.CSSProperties,
+    onPointerDown: startLongPress,
+    onPointerUp: endLongPress,
+    onPointerLeave: endLongPress,
   };
 
   const renderVoiceCapsule = () => {
@@ -540,6 +630,7 @@ export default function AthanPage() {
       </AnimatePresence>
 
       {renderVoiceCapsule()}
+      {renderHistoryOverlay()}
 
       <motion.div key={cityId} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} id="user-focus">
         {CITIES[cityId].user}
