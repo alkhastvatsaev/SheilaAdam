@@ -56,7 +56,7 @@ export default function AthanPage() {
 
   // Push notification state
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const VAPID_PUBLIC_KEY = 'BNJYNHCV6iuyIXXAryAV2D7f6b3HZocIK_yPm9PJaWOnx0RlYYP_QDAeGGqzwDpWrDYYQNlaN8RYy2i422b6u2I';
+  const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
 
   // Register SW and check subscription
   useEffect(() => {
@@ -71,6 +71,7 @@ export default function AthanPage() {
 
   // Firebase: sync voice message
   useEffect(() => {
+    if (!db) return;
     const vmRef = ref(db, 'voice_message');
     const unsub = onValue(vmRef, (snapshot) => {
       const val = snapshot.val();
@@ -81,6 +82,7 @@ export default function AthanPage() {
 
   // Firebase: sync voice history
   useEffect(() => {
+    if (!db) return;
     const vhRef = ref(db, 'voice_history');
     const unsub = onValue(vhRef, (snapshot) => {
       const val = snapshot.val();
@@ -95,6 +97,7 @@ export default function AthanPage() {
 
   // Firebase: sync validations
   useEffect(() => {
+    if (!db) return;
     const valRef = ref(db, 'validations');
     const unsub = onValue(valRef, (snapshot) => {
       const data = snapshot.val();
@@ -118,6 +121,7 @@ export default function AthanPage() {
   }, []);
 
   const saveValidations = useCallback((newValidations: Record<string, boolean[]>) => {
+    if (!db) return;
     set(ref(db, 'validations'), {
       date: new Date().toDateString(),
       strasbourg: newValidations.strasbourg,
@@ -236,7 +240,9 @@ export default function AthanPage() {
       });
 
       // Store in Firebase
-      await set(ref(db, `push_subscriptions/${userId}`), subscription.toJSON());
+      if (db) {
+        await set(ref(db, `push_subscriptions/${userId}`), subscription.toJSON());
+      }
       setIsSubscribed(true);
       alert("Notifications activées avec succès ! 🔔");
     } catch (error: any) {
@@ -246,7 +252,7 @@ export default function AthanPage() {
   };
 
   const notifyPartner = async () => {
-    if (!identity) return;
+    if (!identity || !db) return;
     const partnerId = identity === 'strasbourg' ? 'pavlodar' : 'strasbourg';
     const snapshot = await get(ref(db, `push_subscriptions/${partnerId}`));
     const subscription = snapshot.val();
@@ -292,8 +298,10 @@ export default function AthanPage() {
             from: CITIES[cityId].user,
             timestamp: Date.now(),
           };
-          set(ref(db, 'voice_message'), newMsg);
-          push(ref(db, 'voice_history'), newMsg);
+          if (db) {
+            set(ref(db, 'voice_message'), newMsg);
+            push(ref(db, 'voice_history'), newMsg);
+          }
           notifyPartner(); // Trigger push
         };
         reader.readAsDataURL(blob);
