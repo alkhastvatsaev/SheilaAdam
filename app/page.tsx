@@ -512,12 +512,15 @@ export default function AthanPage() {
     onPointerDown: startLongPress,
     onPointerUp: endLongPress,
     onPointerLeave: endLongPress,
+    animate: isPressing ? {
+      scale: [1, 0.96, 1],
+      transition: { duration: 1, repeat: Infinity, ease: "easeInOut" as const }
+    } : { scale: 1 },
     onDragStart: () => {
       setIsPressing(false);
       endLongPress();
     },
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
-    className: isPressing ? 'capsule-pressing' : '',
   };
 
   const renderVoiceCapsule = () => {
