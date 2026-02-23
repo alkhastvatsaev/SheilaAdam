@@ -186,8 +186,33 @@ export default function AthanPage() {
 
   const subscribeToNotifications = async (userId: CityId) => {
     try {
-      if (!('serviceWorker' in navigator)) return;
+      if (!('serviceWorker' in navigator)) {
+        alert("Votre navigateur ne supporte pas les notifications.");
+        return;
+      }
+
+      // Explicitly check for standalone mode on iOS
+      const isStandalone = (navigator as any).standalone || window.matchMedia('(display-mode: standalone)').matches;
+      if (!isStandalone && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
+        alert("iOS nécessite que l'application soit ajoutée à l'écran d'accueil pour activer les notifications.");
+        return;
+      }
+
+      // Step 1: Request permission
+      let permission = Notification.permission;
+      if (permission === 'default') {
+        permission = await Notification.requestPermission();
+      }
+
+      if (permission !== 'granted') {
+        alert("Les notifications ont été bloquées. Veuillez les autoriser dans les réglages de votre iPhone pour cette application.");
+        return;
+      }
+
+      // Step 2: Get/Wait for Service Worker
       const registration = await navigator.serviceWorker.ready;
+      
+      // Step 3: Subscribe
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
@@ -196,10 +221,10 @@ export default function AthanPage() {
       // Store in Firebase
       await set(ref(db, `push_subscriptions/${userId}`), subscription.toJSON());
       setIsSubscribed(true);
-      alert("Notifications activées !");
-    } catch (error) {
+      alert("Notifications activées avec succès ! 🔔");
+    } catch (error: any) {
       console.error("Subscription failed", error);
-      alert("Erreur lors de l'activation des notifications. Assurez-vous d'avoir ajouté l'app à l'écran d'accueil.");
+      alert(`Erreur : ${error.message || "Inconnue"}. Essayez de fermer et rouvrir l'application.`);
     }
   };
 
