@@ -391,8 +391,10 @@ export default function AthanPage() {
     if (isRecording) return;
     longPressTimerRef.current = setTimeout(() => {
       setShowHistory(true);
-      if (window.navigator.vibrate) window.navigator.vibrate(50);
-    }, 600);
+      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(50);
+      }
+    }, 400); // Shorter, like native iOS
   };
 
   const endLongPress = () => {
