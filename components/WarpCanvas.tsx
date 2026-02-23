@@ -193,7 +193,7 @@ export default function WarpCanvas({ isDark, sunPos }: WarpCanvasProps) {
       const foamOffset = Math.sin(waveOffset * 2) * 5;
 
       // 1. Sand
-      ctx!.fillStyle = '#fdf8f1';
+      ctx!.fillStyle = '#f6d7b0';
       ctx!.beginPath();
       ctx!.moveTo(0, height + 100);
       ctx!.lineTo(0, height - beachHeight);
