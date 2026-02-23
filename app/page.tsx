@@ -44,6 +44,7 @@ export default function AthanPage() {
   const [snakeSmoke, setSnakeSmoke] = useState(false);
   const [voiceHistory, setVoiceHistory] = useState<VoiceMessage[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [isPressing, setIsPressing] = useState(false);
   
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -364,7 +365,7 @@ export default function AthanPage() {
     const times = [prayers.fajr.getTime(), prayers.dhuhr.getTime(), prayers.asr.getTime(), prayers.maghrib.getTime(), prayers.isha.getTime()];
     if (!isDark) {
       const p = Math.max(0, Math.min(1, (nowTime - times[0]) / (times[3] - times[0])));
-      return { left: `calc(${p * 100}% - 25px)`, bottom: `${Math.sin(p * Math.PI) * 200 + 190}px` };
+      return { left: `calc(${p * 100}% - 25px)`, bottom: `${Math.sin(p * Math.PI) * 280 + 220}px` };
     } else {
       let s = times[3], e = times[0];
       if (nowTime > times[3]) {
@@ -375,7 +376,7 @@ export default function AthanPage() {
         s = getPrayerTimesForCity(cityId, yesterday).maghrib.getTime();
       }
       const p = Math.max(0, Math.min(1, (nowTime - s) / (e - s)));
-      return { left: `calc(${p * 100}% - 25px)`, bottom: `${Math.sin(p * Math.PI) * 200 + 190}px` };
+      return { left: `calc(${p * 100}% - 25px)`, bottom: `${Math.sin(p * Math.PI) * 280 + 220}px` };
     }
   };
 
@@ -399,8 +400,10 @@ export default function AthanPage() {
   // Long press for history
   const startLongPress = () => {
     if (isRecording) return;
+    setIsPressing(true);
     longPressTimerRef.current = setTimeout(() => {
       setShowHistory(true);
+      setIsPressing(false);
       if (typeof window !== 'undefined' && 'vibrate' in navigator) {
         navigator.vibrate(50);
       }
@@ -408,6 +411,7 @@ export default function AthanPage() {
   };
 
   const endLongPress = () => {
+    setIsPressing(false);
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
     }
@@ -508,8 +512,12 @@ export default function AthanPage() {
     onPointerDown: startLongPress,
     onPointerUp: endLongPress,
     onPointerLeave: endLongPress,
-    onDragStart: endLongPress,
+    onDragStart: () => {
+      setIsPressing(false);
+      endLongPress();
+    },
     onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
+    className: isPressing ? 'capsule-pressing' : '',
   };
 
   const renderVoiceCapsule = () => {
@@ -575,7 +583,10 @@ export default function AthanPage() {
       <motion.div {...dragProps}>
         <div className="voice-info">
           <div className="voice-from">{CITIES[cityId].user}</div>
-          <div className="voice-status">Laisser un message vocal…</div>
+          <div className="voice-status">Laisse un message vocal…</div>
+        </div>
+        <div style={{ position: 'absolute', top: '10px', right: '14px', opacity: 0.15 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         </div>
         <button
           className="voice-btn mic"

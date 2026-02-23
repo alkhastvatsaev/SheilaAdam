@@ -187,14 +187,27 @@ export default function WarpCanvas({ isDark, sunPos }: WarpCanvasProps) {
     };
 
     const drawBeach = () => {
-      const beachHeight = height * 0.1;
-      ctx!.fillStyle = '#fdf8f1'; // Ultra-soft minimalist sand
+      const beachHeight = height * 0.12;
+      
+      // Foam/Wave movement
+      const foamOffset = Math.sin(waveOffset * 2) * 5;
+
+      // 1. Sand
+      ctx!.fillStyle = '#fdf8f1';
       ctx!.beginPath();
       ctx!.moveTo(0, height + 100);
       ctx!.lineTo(0, height - beachHeight);
-      ctx!.quadraticCurveTo(width / 2, height - beachHeight - 20, width, height - beachHeight);
+      ctx!.bezierCurveTo(width * 0.3, height - beachHeight - 30, width * 0.7, height - beachHeight + 20, width, height - beachHeight - 10);
       ctx!.lineTo(width, height + 100);
       ctx!.fill();
+
+      // 2. Foam (The wave edge)
+      ctx!.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx!.lineWidth = 2;
+      ctx!.beginPath();
+      ctx!.moveTo(0, height - beachHeight - 2 + foamOffset);
+      ctx!.bezierCurveTo(width * 0.3, height - beachHeight - 32 + foamOffset, width * 0.7, height - beachHeight + 18 + foamOffset, width, height - beachHeight - 12 + foamOffset);
+      ctx!.stroke();
     };
 
     const drawSea = () => {
