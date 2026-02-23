@@ -199,29 +199,32 @@ export default function WarpCanvas({ isDark, sunPos }: WarpCanvasProps) {
       for (let x = 0; x <= width; x += 15) {
         ctx!.lineTo(x, seaTop + Math.sin(x * 0.004 + waveOffset) * 20);
       }
-      ctx!.lineTo(width, height);
+      ctx!.lineTo(width, height + 100);
+      ctx!.lineTo(0, height + 100);
       ctx!.fill();
 
       // Layer 2: Middle
       ctx!.fillStyle = 'rgba(0, 100, 255, 0.05)';
       ctx!.beginPath();
-      ctx!.moveTo(0, height);
+      ctx!.moveTo(0, height + 100);
       ctx!.lineTo(0, seaTop + 30);
       for (let x = 0; x <= width; x += 15) {
         ctx!.lineTo(x, seaTop + 30 + Math.sin(x * 0.006 + waveOffset * 0.8) * 12);
       }
-      ctx!.lineTo(width, height);
+      ctx!.lineTo(width, height + 100);
+      ctx!.lineTo(0, height + 100);
       ctx!.fill();
 
       // Layer 3: Front
       ctx!.fillStyle = 'rgba(0, 122, 255, 0.07)';
       ctx!.beginPath();
-      ctx!.moveTo(0, height);
+      ctx!.moveTo(0, height + 100);
       ctx!.lineTo(0, seaTop + 60);
       for (let x = 0; x <= width; x += 15) {
         ctx!.lineTo(x, seaTop + 60 + Math.sin(x * 0.008 + waveOffset * 1.2) * 8);
       }
-      ctx!.lineTo(width, height);
+      ctx!.lineTo(width, height + 100);
+      ctx!.lineTo(0, height + 100);
       ctx!.fill();
     };
 

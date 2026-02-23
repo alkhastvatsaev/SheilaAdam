@@ -19,7 +19,7 @@ body.dark {
 
 /* Make html also take the background so Safari's overscroll area doesn't flash white */
 html {
-  background: #02040a;
+  background-color: transparent;
 }
 
 * {
@@ -30,13 +30,13 @@ html {
 }
 
 html {
-  height: -webkit-fill-available;
+  height: 100dvh;
 }
 
 body {
   width: 100%;
-  height: 100vh;
-  min-height: -webkit-fill-available;
+  height: 100dvh;
+  min-height: 100dvh;
   margin: 0;
   padding: 0;
   overflow: hidden;
@@ -154,7 +154,7 @@ main {
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: 100dvh;
   pointer-events: none;
   z-index: 0;
 }
