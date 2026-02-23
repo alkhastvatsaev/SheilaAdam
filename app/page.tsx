@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { db } from '@/lib/firebase';
-import { ref, onValue, set } from 'firebase/database';
+import { ref, onValue, set, get } from 'firebase/database';
 import { getPrayerTimesForCity, CITIES, CityId } from '@/lib/athan';
 import WarpCanvas from '@/components/WarpCanvas';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,6 +51,21 @@ export default function AthanPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Push notification state
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const VAPID_PUBLIC_KEY = 'BNJYNHCV6iuyIXXAryAV2D7f6b3HZocIK_yPm9PJaWOnx0RlYYP_QDAeGGqzwDpWrDYYQNlaN8RYy2i422b6u2I';
+
+  // Register SW and check subscription
+  useEffect(() => {
+    if ('serviceWorker' in navigator && identity) {
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        reg.pushManager.getSubscription().then((sub) => {
+          setIsSubscribed(!!sub);
+        });
+      });
+    }
+  }, [identity]);
+
   // Firebase: sync voice message
   useEffect(() => {
     const vmRef = ref(db, 'voice_message');
@@ -98,6 +113,12 @@ export default function AthanPage() {
     localStorage.setItem('preferred_city', chosen);
     setIdentity(chosen);
     setCityId(chosen);
+    // Suggest notification after choice
+    setTimeout(() => {
+      if (confirm("Voulez-vous activer les notifications pour être prévenu quand l'autre laisse un message vocal ?")) {
+        subscribeToNotifications(chosen);
+      }
+    }, 1000);
   };
 
   const handleCityChange = (newCity: CityId) => {
@@ -151,6 +172,57 @@ export default function AthanPage() {
     return () => clearInterval(timer);
   }, [cityId]);
 
+  // Push Notifications Logic
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
+
+  const subscribeToNotifications = async (userId: CityId) => {
+    try {
+      if (!('serviceWorker' in navigator)) return;
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+
+      // Store in Firebase
+      await set(ref(db, `push_subscriptions/${userId}`), subscription.toJSON());
+      setIsSubscribed(true);
+      alert("Notifications activées !");
+    } catch (error) {
+      console.error("Subscription failed", error);
+      alert("Erreur lors de l'activation des notifications. Assurez-vous d'avoir ajouté l'app à l'écran d'accueil.");
+    }
+  };
+
+  const notifyPartner = async () => {
+    if (!identity) return;
+    const partnerId = identity === 'strasbourg' ? 'pavlodar' : 'strasbourg';
+    const snapshot = await get(ref(db, `push_subscriptions/${partnerId}`));
+    const subscription = snapshot.val();
+
+    if (subscription) {
+      await fetch('/api/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription,
+          title: "Nouveau message vocal ! 🎙",
+          body: `${CITIES[identity].user} vient de vous laisser un message.`,
+          url: '/'
+        })
+      });
+    }
+  };
+
   // Voice recording methods
   const startRecording = async () => {
     try {
@@ -179,6 +251,7 @@ export default function AthanPage() {
             timestamp: Date.now(),
           };
           set(ref(db, 'voice_message'), newMsg);
+          notifyPartner(); // Trigger push
         };
         reader.readAsDataURL(blob);
         stream.getTracks().forEach(t => t.stop());
@@ -417,6 +490,13 @@ export default function AthanPage() {
 
       <div className="city-selector">
         <button className={`city-btn ${cityId === 'strasbourg' ? 'active' : ''}`} onClick={() => handleCityChange('strasbourg')}>Strasbourg</button>
+        <button 
+          className="city-btn" 
+          onClick={() => identity && subscribeToNotifications(identity)}
+          style={{ opacity: isSubscribed ? 0.4 : 1 }}
+        >
+          {isSubscribed ? '🔔' : '🔕'}
+        </button>
         <button className={`city-btn ${cityId === 'pavlodar' ? 'active' : ''}`} onClick={() => handleCityChange('pavlodar')}>Pavlodar</button>
       </div>
 
