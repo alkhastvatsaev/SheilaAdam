@@ -496,13 +496,14 @@ export default function AthanPage() {
     onPointerDown: startLongPress,
     onPointerUp: endLongPress,
     onPointerLeave: endLongPress,
+    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
   };
 
   const renderVoiceCapsule = () => {
     if (isRecording) {
       return (
         <motion.div {...dragProps}>
-          <div className="voice-info" onPointerDown={e => e.stopPropagation()}>
+          <div className="voice-info">
             <div className="voice-from">{CITIES[cityId].user} • En cours</div>
             <div className="voice-status">
               <div className="waveform">
@@ -534,7 +535,7 @@ export default function AthanPage() {
               ? <StopIcon size={14} color="var(--text)" />
               : <PlayIcon size={14} color="var(--text)" />}
           </button>
-          <div className="voice-info" onPointerDown={e => e.stopPropagation()}>
+          <div className="voice-info">
             <div className="voice-from">{voiceMessage.from}</div>
             <div className="voice-status">
               {isPlaying
@@ -557,7 +558,7 @@ export default function AthanPage() {
     // Empty state
     return (
       <motion.div {...dragProps}>
-        <div className="voice-info" onPointerDown={e => e.stopPropagation()}>
+        <div className="voice-info">
           <div className="voice-from">{CITIES[cityId].user}</div>
           <div className="voice-status">Laisser un message vocal…</div>
         </div>
